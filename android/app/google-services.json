@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "476671139374",
+    "project_id": "the-trick-abb73",
+    "storage_bucket": "the-trick-abb73.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:476671139374:android:8a83c3ab55078e701549bf",
+        "android_client_info": {
+          "package_name": "com.trick.the_trick"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWFOQTgmL81QWue2Fn5lbC9IkNBvSEXIc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
 import 'screens/game_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-void main() {
-  runApp(const WhereIsBallApp());
+void main() async{
+  // Flutter 엔진과 비동기 통신 준비
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp();
+
+  runApp(
+    const ProviderScope(
+      child: WhereIsBallApp(),
+    ),
+  );
 }
 
 class WhereIsBallApp extends StatelessWidget {
