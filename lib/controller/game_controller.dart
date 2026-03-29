@@ -4,86 +4,165 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../model/game_state.dart';
 import '../model/cup_model.dart';
 
-// 1. 프로바이더 선언 (NotifierProvider 사용)
 final gameProvider = NotifierProvider<GameNotifier, GameState>(() {
   return GameNotifier();
 });
 
-// 2. 클래스 정의 (Notifier 상속)
 class GameNotifier extends Notifier<GameState> {
+  static const int _cupCount = 5;
+  Timer? _roundTimer;
 
   @override
   GameState build() {
-    // 초기 상태를 반환합니다. (기존의 super(initialState) 역할)
     return GameState(
-      cups: List.generate(5, (i) => CupModel(id: i, currentSlot: i)),
-      currentStage: 1,
-      totalScore: 0,
+      cups: List.generate(_cupCount, (i) => CupModel(id: i, currentSlot: i)),
     );
   }
 
-  Timer? _roundTimer;
-  DateTime? _startTime;
-
-  // --- 게임 로직들 ---
-
+  // ── 게임 시작 ───────────────────────────────────────
   Future<void> startGame() async {
-    // state = ... 방식으로 상태 업데이트
     state = state.copyWith(
       status: GameStatus.showingBall,
-      ballId: Random().nextInt(5),
+      ballId: Random().nextInt(_cupCount),
       userSelectedId: null,
+      showScorePopup: false,
+      isBallGlowing: false,
     );
 
-    await Future.delayed(const Duration(seconds: 2));
+    // C 연출: 공 반짝임
+    await Future.delayed(const Duration(milliseconds: 1200));
+    if (!ref.mounted) return;
+    state = state.copyWith(isBallGlowing: true);
 
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (!ref.mounted) return;
+    state = state.copyWith(isBallGlowing: false);
+
+    await Future.delayed(const Duration(milliseconds: 100));
     if (!ref.mounted) return;
 
-    await startShuffle();
+    await _startShuffle();
   }
 
-  Future<void> startShuffle() async {
+  // ── 셔플 ────────────────────────────────────────────
+  Future<void> _startShuffle() async {
     state = state.copyWith(status: GameStatus.shuffling);
 
-    // ... 기존 섞기 로직 동일 ...
-    // 로직 완료 후
-    state = state.copyWith(status: GameStatus.playing, remainingTime: 5);
-    _startTime = DateTime.now();
+    final int shuffleCount = 5 + (state.currentStage * 2);
+    final int speedMs = max(150, 600 - (state.currentStage * 40));
+    final random = Random();
+
+    for (int i = 0; i < shuffleCount; i++) {
+      int idx1 = random.nextInt(_cupCount);
+      int idx2 = random.nextInt(_cupCount);
+      while (idx1 == idx2) idx2 = random.nextInt(_cupCount);
+
+      await Future.delayed(Duration(milliseconds: speedMs));
+      if (!ref.mounted) return;
+
+      final newCups = List<CupModel>.from(state.cups);
+      final tempSlot = newCups[idx1].currentSlot;
+      newCups[idx1].currentSlot = newCups[idx2].currentSlot;
+      newCups[idx2].currentSlot = tempSlot;
+      state = state.copyWith(cups: newCups);
+    }
+
+    state = state.copyWith(
+      status: GameStatus.playing,
+      remainingTime: 5,
+    );
     _startTimer();
   }
 
+  // ── 타이머 ───────────────────────────────────────────
   void _startTimer() {
     _roundTimer?.cancel();
     _roundTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!ref.mounted) {
+        timer.cancel();
+        return;
+      }
       if (state.remainingTime > 0) {
         state = state.copyWith(remainingTime: state.remainingTime - 1);
       } else {
         timer.cancel();
-        handleTimeOut();
+        _handleTimeOut();
       }
     });
   }
 
-  void handleTimeOut() {
+  void _handleTimeOut() {
+    if (state.status == GameStatus.opened) return;
     state = state.copyWith(status: GameStatus.gameOver);
   }
 
+  // ── 컵 탭 ────────────────────────────────────────────
   void tapCup(int id) {
     if (state.status != GameStatus.playing) return;
     _roundTimer?.cancel();
 
-    final duration = DateTime.now().difference(_startTime!);
-    state = state.copyWith(userSelectedId: id, status: GameStatus.opened);
+    state = state.copyWith(
+      userSelectedId: id,
+      status: GameStatus.opened,
+    );
 
     if (id == state.ballId) {
-      // 성공 로직 (점수 계산 등)
+      final newCombo = state.combo + 1;
+      final score = _calcScore(newCombo);
+      state = state.copyWith(
+        combo: newCombo,
+        totalScore: state.totalScore + score['total']!,
+        lastBaseScore: score['base']!,
+        lastTimeBonus: score['bonus']!,
+        lastComboBonus: score['combo']!,
+        lastTotalEarned: score['total']!,
+        showScorePopup: true,
+      );
     } else {
-      state = state.copyWith(status: GameStatus.gameOver);
+      state = state.copyWith(
+        combo: 0,
+        status: GameStatus.gameOver,
+      );
     }
   }
 
+  // ── 팝업 닫기 ────────────────────────────────────────
+  void hideScorePopup() {
+    state = state.copyWith(showScorePopup: false);
+  }
+
+  // ── 다음 스테이지 ─────────────────────────────────────
+  void nextStage() {
+    state = state.copyWith(
+      currentStage: state.currentStage + 1,
+      ballId: null,
+      userSelectedId: null,
+      status: GameStatus.preparing,
+      showScorePopup: false,
+      isBallGlowing: false,
+      cups: List.generate(_cupCount, (i) => CupModel(id: i, currentSlot: i)),
+    );
+  }
+
+  // ── 게임 리셋 ────────────────────────────────────────
   void resetGame() {
     _roundTimer?.cancel();
-    ref.invalidateSelf(); // 현재 Notifier의 상태를 초기 build() 값으로 리셋
+    ref.invalidateSelf();
+  }
+
+  // ── 점수 계산 ─────────────────────────────────────────
+  // base  = 500 * stage²
+  // bonus = 100 * 남은시간 (최대 500)
+  // combo = base * 0.1 * (콤보-1)
+  Map<String, int> _calcScore(int combo) {
+    final int base = 500 * state.currentStage * state.currentStage;
+    final int bonus = state.remainingTime * 100;
+    final int comboBonus = combo > 1 ? (base * 0.1 * (combo - 1)).toInt() : 0;
+    return {
+      'base': base,
+      'bonus': bonus,
+      'combo': comboBonus,
+      'total': base + bonus + comboBonus,
+    };
   }
 }
