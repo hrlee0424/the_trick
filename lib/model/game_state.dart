@@ -45,7 +45,9 @@ class GameState {
     int? currentStage,
     int? totalScore,
     int? ballId,
+    bool clearBallId = false,          // null로 명시 초기화할 때 사용
     int? userSelectedId,
+    bool clearUserSelectedId = false,  // null로 명시 초기화할 때 사용
     List<CupModel>? cups,
     GameStatus? status,
     int? remainingTime,
@@ -60,8 +62,8 @@ class GameState {
     return GameState(
       currentStage: currentStage ?? this.currentStage,
       totalScore: totalScore ?? this.totalScore,
-      ballId: ballId ?? this.ballId,
-      userSelectedId: userSelectedId ?? this.userSelectedId,
+      ballId: clearBallId ? null : (ballId ?? this.ballId),
+      userSelectedId: clearUserSelectedId ? null : (userSelectedId ?? this.userSelectedId),
       cups: cups ?? this.cups,
       status: status ?? this.status,
       remainingTime: remainingTime ?? this.remainingTime,

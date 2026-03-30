@@ -24,7 +24,7 @@ class GameNotifier extends Notifier<GameState> {
     state = state.copyWith(
       status: GameStatus.showingBall,
       ballId: Random().nextInt(_cupCount),
-      userSelectedId: null,
+      clearUserSelectedId: true,   // ← 재시작 시 이전 선택 색상 초기화
       showScorePopup: false,
       isBallGlowing: false,
     );
@@ -135,8 +135,8 @@ class GameNotifier extends Notifier<GameState> {
   void nextStage() {
     state = state.copyWith(
       currentStage: state.currentStage + 1,
-      ballId: null,
-      userSelectedId: null,
+      clearBallId: true,
+      clearUserSelectedId: true,   // ← 컵 색상 초기화 핵심
       status: GameStatus.preparing,
       showScorePopup: false,
       isBallGlowing: false,
