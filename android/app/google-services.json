@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "476671139374",
-    "project_id": "the-trick-abb73",
-    "storage_bucket": "the-trick-abb73.firebasestorage.app"
+    "project_number": "765288355564",
+    "project_id": "eye-catch-858f4",
+    "storage_bucket": "eye-catch-858f4.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:476671139374:android:8a83c3ab55078e701549bf",
+        "mobilesdk_app_id": "1:765288355564:android:b3a6b85bd716edd76637c9",
         "android_client_info": {
-          "package_name": "com.trick.the_trick"
+          "package_name": "com.dogrim.eye_catch"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBWFOQTgmL81QWue2Fn5lbC9IkNBvSEXIc"
+          "current_key": "AIzaSyAw4D7ApKq67e90m4u7bhWJUbbsjDomA4g"
         }
       ],
       "services": {

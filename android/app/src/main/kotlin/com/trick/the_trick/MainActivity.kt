@@ -1,4 +1,4 @@
-package com.trick.the_trick
+package com.dogrim.eye_catch
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -117,13 +117,13 @@ class _GameScreenState extends ConsumerState<GameScreen>
             child: Column(
               children: [
                 _buildTopBar(state, notifier),
-                const Spacer(),
+                const Spacer(flex: 1),
                 _buildStatusText(isPreparing, isShuffling),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
                 _buildTimer(isPlaying, state.remainingTime),
-                const SizedBox(height: 24),
+                const SizedBox(height: 8),
                 _buildCupArea(state, cupWidth, isOpened, isPreparing),
-                const Spacer(),
+                const Spacer(flex: 2),
                 if (isPreparing) _buildStartSection(notifier),
                 const SizedBox(height: 40),
               ],
@@ -202,10 +202,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
   // ── 상태 텍스트 ────────────────────────────────────
   Widget _buildStatusText(bool isPreparing, bool isShuffling) {
     final text = isPreparing
-        ? "눈을 크게 뜨세요 👀"
+        ? "🛸 UFO를 주시하세요!"
         : isShuffling
-        ? "따라올 수 있겠어?"
-        : "공은 어디에?";
+        ? "🛸 UFO를 따라올 수 있겠어?"
+        : "👽 외계인은 어디에 숨었을까?";
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
       child: Text(text,
@@ -254,7 +254,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
             duration: dur,
             curve: Curves.easeInOut,
             left: 30 + (cup.currentSlot * cupWidth),
-            top: (isOpened || isPreparing) ? 30 : 110,
+            top: 30,
             child: GestureDetector(
               onTap: () => ref.read(gameProvider.notifier).tapCup(cup.id),
               child: SizedBox(
@@ -556,17 +556,15 @@ class _GameScreenState extends ConsumerState<GameScreen>
       ),
       pageBuilder: (ctx, _, __) {
         return StatefulBuilder(builder: (context, setDialogState) {
-          final keyboardH = MediaQuery.of(context).viewInsets.bottom;
-          final screenH   = MediaQuery.of(context).size.height;
-
           return Scaffold(
             backgroundColor: Colors.transparent,
-            resizeToAvoidBottomInset: true,
+            resizeToAvoidBottomInset: false,
             body: Center(
               child: Container(
-                margin: EdgeInsets.fromLTRB(16, 16, 16, 16 + keyboardH),
-                constraints:
-                BoxConstraints(maxHeight: screenH - 32 - keyboardH),
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.85,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(28),
@@ -592,7 +590,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 3)),
                         const SizedBox(height: 4),
-                        Text("Stage ${gameState.currentStage} 도달",
+                        Text("Stage ${gameState.currentStage}",
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                                 color: AppColors.textMuted, fontSize: 13)),
@@ -640,59 +638,61 @@ class _GameScreenState extends ConsumerState<GameScreen>
                         ),
                         const SizedBox(height: 20),
 
-                        // 닉네임 입력
-                        const Text("닉네임",
-                            style: TextStyle(
-                                color: AppColors.textMuted,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1)),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: controller,
-                          maxLength: 8,
-                          textAlign: TextAlign.center,
-                          enabled: myRank == null,
-                          style: const TextStyle(
-                              color: AppColors.textPrimary, fontSize: 16),
-                          decoration: InputDecoration(
-                            hintText: "닉네임 입력 (최대 8자)",
-                            hintStyle: const TextStyle(
-                                color: AppColors.textMuted, fontSize: 14),
-                            filled: true,
-                            fillColor: AppColors.surfaceAlt,
-                            counterStyle: const TextStyle(
-                                color: AppColors.textMuted, fontSize: 11),
-                            border: OutlineInputBorder(
+                        // 닉네임 입력 (0점이면 숨김)
+                        if (gameState.totalScore > 0) ...[
+                          const Text("닉네임",
+                              style: TextStyle(
+                                  color: AppColors.textMuted,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1)),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: controller,
+                            maxLength: 8,
+                            textAlign: TextAlign.center,
+                            enabled: myRank == null,
+                            style: const TextStyle(
+                                color: AppColors.textPrimary, fontSize: 16),
+                            decoration: InputDecoration(
+                              hintText: "닉네임 입력 (최대 8자)",
+                              hintStyle: const TextStyle(
+                                  color: AppColors.textMuted, fontSize: 14),
+                              filled: true,
+                              fillColor: AppColors.surfaceAlt,
+                              counterStyle: const TextStyle(
+                                  color: AppColors.textMuted, fontSize: 11),
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none),
+                              focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                      color: AppColors.amber, width: 1.5)),
+                              enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none),
-                            focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                    color: AppColors.amber, width: 1.5)),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: errorMessage != null
-                                  ? const BorderSide(
-                                  color: AppColors.red, width: 1.5)
-                                  : BorderSide.none,
+                                borderSide: errorMessage != null
+                                    ? const BorderSide(
+                                    color: AppColors.red, width: 1.5)
+                                    : BorderSide.none,
+                              ),
                             ),
+                            onChanged: (val) {
+                              if (val.isNotEmpty && errorMessage != null) {
+                                setDialogState(() => errorMessage = null);
+                              }
+                            },
                           ),
-                          onChanged: (val) {
-                            if (val.isNotEmpty && errorMessage != null) {
-                              setDialogState(() => errorMessage = null);
-                            }
-                          },
-                        ),
-                        SizedBox(
-                          height: 20,
-                          child: errorMessage != null
-                              ? Text(errorMessage!,
-                              style: const TextStyle(
-                                  color: AppColors.red, fontSize: 12))
-                              : null,
-                        ),
-                        const SizedBox(height: 12),
+                          SizedBox(
+                            height: 20,
+                            child: errorMessage != null
+                                ? Text(errorMessage!,
+                                style: const TextStyle(
+                                    color: AppColors.red, fontSize: 12))
+                                : null,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
 
                         // TOP 10
                         const Row(children: [
@@ -835,59 +835,61 @@ class _GameScreenState extends ConsumerState<GameScreen>
                                       fontWeight: FontWeight.w600)),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: isLoading || myRank != null
-                                  ? null
-                                  : () async {
-                                if (controller.text.trim().isEmpty) {
-                                  setDialogState(() => errorMessage =
-                                  "닉네임을 입력해주세요!");
-                                  return;
-                                }
-                                setDialogState(
-                                        () => isLoading = true);
-                                final rank =
-                                await RankingService()
-                                    .saveScoreAndGetRank(
-                                  controller.text.trim(),
-                                  gameState.totalScore,
-                                  gameState.currentStage,
-                                );
-                                if (!mounted) return;
-                                setDialogState(() {
-                                  isLoading = false;
-                                  myRank = rank > 0 ? rank : null;
-                                });
-                              },
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 14),
-                                backgroundColor: AppColors.amber,
-                                foregroundColor: AppColors.bg,
-                                disabledBackgroundColor:
-                                AppColors.amber.withOpacity(0.3),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                    BorderRadius.circular(12)),
+                          if (gameState.totalScore > 0) ...[
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: isLoading || myRank != null
+                                    ? null
+                                    : () async {
+                                  if (controller.text.trim().isEmpty) {
+                                    setDialogState(() => errorMessage =
+                                    "닉네임을 입력해주세요!");
+                                    return;
+                                  }
+                                  setDialogState(
+                                          () => isLoading = true);
+                                  final rank =
+                                  await RankingService()
+                                      .saveScoreAndGetRank(
+                                    controller.text.trim(),
+                                    gameState.totalScore,
+                                    gameState.currentStage,
+                                  );
+                                  if (!mounted) return;
+                                  setDialogState(() {
+                                    isLoading = false;
+                                    myRank = rank > 0 ? rank : null;
+                                  });
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 14),
+                                  backgroundColor: AppColors.amber,
+                                  foregroundColor: AppColors.bg,
+                                  disabledBackgroundColor:
+                                  AppColors.amber.withOpacity(0.3),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                      BorderRadius.circular(12)),
+                                ),
+                                child: isLoading
+                                    ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                        color: AppColors.bg,
+                                        strokeWidth: 2))
+                                    : Text(
+                                    myRank != null
+                                        ? "등록 완료 ✓"
+                                        : "기록 등록",
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 14)),
                               ),
-                              child: isLoading
-                                  ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                      color: AppColors.bg,
-                                      strokeWidth: 2))
-                                  : Text(
-                                  myRank != null
-                                      ? "등록 완료 ✓"
-                                      : "기록 등록",
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 14)),
                             ),
-                          ),
+                          ],
                         ]),
                       ],
                     ),

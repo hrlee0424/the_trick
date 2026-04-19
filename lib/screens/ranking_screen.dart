@@ -151,7 +151,7 @@ class _RankingScreenState extends State<RankingScreen> {
                                         : AppColors.textMuted),
                                 overflow: TextOverflow.ellipsis),
                             const SizedBox(height: 2),
-                            Text("Stage ${ranker.stage} 도달",
+                            Text("Stage ${ranker.stage}",
                                 style: const TextStyle(
                                     fontSize: 12,
                                     color: AppColors.textMuted)),

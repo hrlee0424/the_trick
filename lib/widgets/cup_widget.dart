@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
-import '../screens/game_screen.dart' show AppColors;
 
+// ─────────────────────────────────────────────────────
+// CupWidget — UFO 이미지 + 외계인 이미지
+//   isOpened  : true  → UFO 들어올려져 외계인 보임
+//             : false → UFO 내려와 외계인 숨김
+//   isSelected: 정답(green) / 오답(red) 색상 오버레이
+//   isBallGlowing: 공 공개 직전 glow 펄스
+// ─────────────────────────────────────────────────────
 class CupWidget extends StatefulWidget {
   final double size;
   final bool isOpened;
@@ -36,8 +42,8 @@ class _CupWidgetState extends State<CupWidget>
     _glowAnim = TweenSequence([
       TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 50),
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 50),
-    ]).animate(
-        CurvedAnimation(parent: _glowController, curve: Curves.easeInOut));
+    ]).animate(CurvedAnimation(
+        parent: _glowController, curve: Curves.easeInOut));
   }
 
   @override
@@ -56,56 +62,70 @@ class _CupWidgetState extends State<CupWidget>
 
   @override
   Widget build(BuildContext context) {
-    // 선택 결과에 따른 컵 색상
-    Color cupColor;
+    final double sz = widget.size;
+
+    // 정답/오답 선택 시 UFO에 색상 오버레이
+    Color? overlayColor;
     if (widget.isSelected) {
-      cupColor = widget.hasBall ? AppColors.green : AppColors.red;
-    } else {
-      cupColor = AppColors.amber;
+      overlayColor = widget.hasBall
+          ? const Color(0xFF4DFF9E).withOpacity(0.45)
+          : const Color(0xFFFF4D6D).withOpacity(0.45);
     }
 
-    return Column(
-      children: [
-        Icon(
-          Icons.local_cafe,
-          size: widget.size,
-          color: cupColor.withOpacity(widget.isOpened ? 0.9 : 1.0),
-          shadows: [
-            Shadow(
-              color: cupColor.withOpacity(0.35),
-              blurRadius: 12,
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        if (widget.hasBall && widget.isOpened)
-          AnimatedBuilder(
-            animation: _glowAnim,
-            builder: (context, _) {
-              return Transform.translate(
-                offset: Offset(0, -_glowAnim.value * 5),
-                child: Container(
-                  width: 22,
-                  height: 22,
-                  decoration: BoxDecoration(
-                    color: AppColors.red,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.red.withOpacity(
-                            0.4 + _glowAnim.value * 0.5),
-                        blurRadius: 6 + _glowAnim.value * 16,
-                        spreadRadius: _glowAnim.value * 6,
+    return SizedBox(
+      width: sz * 1.3,
+      height: sz * 2.2,
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          // ── 외계인 (UFO 아래, isOpened 일 때만 보임) ──
+          if (widget.hasBall)
+            Positioned(
+              bottom: 0,
+              child: AnimatedBuilder(
+                animation: _glowAnim,
+                builder: (context, _) {
+                  return AnimatedOpacity(
+                    duration: const Duration(milliseconds: 250),
+                    opacity: widget.isOpened ? 1.0 : 0.0,
+                    child: Transform.translate(
+                      offset: Offset(0, -_glowAnim.value * 6),
+                      child: SizedBox(
+                        width: sz * 0.65,
+                        height: sz * 0.65,
+                        child: Image.asset(
+                          'assets/alien.png',
+                          fit: BoxFit.contain,
+                        ),
                       ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          )
-        else
-          const SizedBox(height: 22),
-      ],
+                    ),
+                  );
+                },
+              ),
+            )
+          else
+            Positioned(
+              bottom: 0,
+              child: SizedBox(width: sz * 0.65, height: sz * 0.65),
+            ),
+
+          // ── UFO 이미지 ──
+          Positioned(
+            top: 0,
+            child: ColorFiltered(
+              colorFilter: overlayColor != null
+                  ? ColorFilter.mode(overlayColor, BlendMode.srcATop)
+                  : const ColorFilter.mode(Colors.transparent, BlendMode.dst),
+              child: Image.asset(
+                'assets/ufo.png',
+                width: sz * 1.3,
+                height: sz * 1.8,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
